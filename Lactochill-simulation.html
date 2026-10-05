@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LactoChill simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef2f4;--pn:#fff;--ink:#14232b;--mut:#5b6b75;--ln:#cfd8dd;--ac:#1d6fd6;--wall:#7b8790;--ins:#d9b86a;--lay:#7fae9a;--cold:#2f6fe0;--mid:#9aa7b0;--hot:#e5452a;--drop:#9fd3ff;--gb:#ffffff;--gt:#5b6b75;--gg:#cfd8dd;--gl:#14232b;--gp:#1d6fd6;--ga:#7a8a94;--gm:#c47a00;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e171c;--pn:#16232a;--ink:#e6eef2;--mut:#93a4ae;--ln:#2a3a43;--ac:#5aa2ff;--wall:#566670;--ins:#b8964a;--lay:#4f7f6d;--gb:#16232a;--gt:#93a4ae;--gg:#2a3a43;--gl:#e6eef2;--gp:#5aa2ff;--ga:#93a4ae;--gm:#e0a64a}}
+:root[data-theme="dark"]{--bg:#0e171c;--pn:#16232a;--ink:#e6eef2;--mut:#93a4ae;--ln:#2a3a43;--ac:#5aa2ff;--wall:#566670;--ins:#b8964a;--lay:#4f7f6d;--gb:#16232a;--gt:#93a4ae;--gg:#2a3a43;--gl:#e6eef2;--gp:#5aa2ff;--ga:#93a4ae;--gm:#e0a64a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:16px}
+h1{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;letter-spacing:-.02em;margin:4px 0 2px}
+.lead{margin:0 0 14px;color:var(--mut);max-width:62ch}
+.grid{display:grid;gap:16px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.pn{background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:12px}
+canvas{display:block;width:100%;border-radius:6px}
+#c{aspect-ratio:5/4;background:var(--bg)}
+#g{height:230px;margin-top:6px}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--mut);margin-top:8px}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:12px}
+button,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:8px 14px;min-height:44px}
+button{cursor:pointer;font-weight:600}
+button:hover{border-color:var(--ac)}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+fieldset{border:1px solid var(--ln);border-radius:10px;margin:0 0 12px;padding:8px 12px 10px;min-width:0}
+legend{font-weight:800;padding:0 6px}
+.sl{display:grid;grid-template-columns:1fr auto;gap:0 8px;margin:8px 0}
+.sl span{color:var(--mut);font-size:.9rem}
+.sl output{font-weight:600;font-variant-numeric:tabular-nums}
+.sl input{grid-column:1/3;width:100%;height:32px;accent-color:var(--ac);margin:0}
+.pre{display:flex;gap:8px;align-items:center;margin:4px 0}
+.pre select{flex:1;min-width:0}
+.note{margin:4px 0 0;font-size:.85rem;color:var(--mut)}
+.ro{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
+.ro div{border-left:3px solid var(--ln);padding-left:8px}
+.ro small{display:block;color:var(--mut);font-size:.78rem}
+.ro b{font-variant-numeric:tabular-nums;font-size:1.05rem}
+#big b{font-size:1.5rem}
+#cond{color:var(--ac)}
+.fr{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;margin:6px 0}
+.fr label{color:var(--mut);font-size:.9rem}
+.fr .in{display:flex;gap:6px}
+input[type=color]{width:44px;height:40px;padding:2px;border:1px solid var(--ln);border-radius:8px;background:var(--bg);cursor:pointer}
+input[type=text],input[type=number]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:6px 8px;min-height:40px;width:104px}
+.fr input.w{width:min(210px,52vw)}
+.fr input[aria-invalid=true]{border-color:#d33}
+.fr input[type=checkbox]{width:24px;height:24px;accent-color:var(--ac)}
+.sub{margin:12px 0 0;font-weight:600;font-size:.85rem;color:var(--mut)}
+</style>
+</head>
+<body>
+<main>
+<h1>LactoChill simulation</h1>
+<p class="lead">Simulate the change in temperature of milk (and other liquids) over time along with the efficiency of insulation materials. Thermal behaviour of PCMs is also modeled.</p>
+<div class="grid">
+<section class="pn" aria-label="Simulation">
+<canvas id="c" role="img" aria-label="Cross-section of a vessel with liquid, wall, insulation and surrounding air, with moving streaks showing heat flow"></canvas>
+<div class="leg"><span><i style="background:var(--wall)"></i>Vessel wall</span><span><i style="background:var(--lay)"></i>PCM layer</span><span><i style="background:var(--ins)"></i>Insulation</span><span><i style="background:var(--cold)"></i>Cold</span><span><i style="background:var(--hot)"></i>Hot</span><span><i style="background:var(--drop)"></i>Condensation</span></div>
+<div class="ro" id="ro"></div>
+<canvas id="g" role="img" aria-label="Graph of liquid and PCM temperature over time"></canvas>
+</section>
+<section aria-label="Controls">
+<div class="bar"><button id="play" type="button">Pause</button><button id="reset" type="button">Restart</button></div>
+<fieldset id="f0"><legend>Time</legend></fieldset>
+<fieldset id="f1"><legend>Liquid</legend></fieldset>
+<fieldset id="f2"><legend>Vessel wall</legend></fieldset>
+<fieldset id="f2b"><legend>Phase-change layer (PCM) touching the vessel</legend></fieldset>
+<fieldset id="f3"><legend>Insulation around the vessel</legend></fieldset>
+<fieldset id="f4"><legend>Air outside</legend></fieldset>
+<fieldset id="f5"><legend>Graph axes and export</legend></fieldset>
+<fieldset id="f6"><legend>Colours (hex codes)</legend></fieldset>
+</section>
+</div>
+</main>
+<script>
+const $=s=>document.querySelector(s),cv=$('#c'),cx=cv.getContext('2d'),gv=$('#g'),gx=gv.getContext('2d');
+const A=0.12,HC=8,LV=2.5e6,clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const S={lt:10,lk:0.2,lc:2000,lm:0.3,lx:0,Lh:234,Tf:18,Tm0:10,Tm:10,T:5,T0:5,m:1,c:4186,Rw:0.3,t:20,k:0.025,Rx:0,Ta:30,RH:70,speed:2000,run:true};
+let time=0,hist=[],last=performance.now(),sig=null;
+const LIQ=[['Water',4186],['Milk',3930],['Ethanol',2440],['Olive oil',1970]];
+const MAT=[['Aerogel blanket',0.015],['Polyurethane foam',0.025],['Still air layer',0.026],['Mineral wool',0.04],['Cork',0.045],['Wood',0.12],['Rubber',0.16],['Glass',1],['Stainless steel',16],['Aluminium',237]];
+const sl={};
+const fm=v=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed(3);
+function slider(box,id,label,min,max,step,unit,log,f){
+  const w=document.createElement('label');w.className='sl';
+  w.innerHTML='<span>'+label+'</span><output></output><input type="range">';
+  const i=w.querySelector('input'),o=w.querySelector('output');
+  i.min=log?0:min;i.max=log?1000:max;i.step=log?1:step;
+  const toV=x=>log?min*Math.pow(max/min,x/1000):+x,toX=v=>log?1000*Math.log(v/min)/Math.log(max/min):v;
+  const show=v=>o.textContent=(f||fm)(v)+(unit?' '+unit:'');
+  const set=v=>{i.value=toX(v);show(v)};
+  i.addEventListener('input',()=>{const v=toV(i.value);S[id]=v;show(v);sl[id].on&&sl[id].on(v)});
+  sl[id]={set,on:null};set(S[id]);box.appendChild(w);
+}
+function preset(box,id,label,list,key){
+  const d=document.createElement('div');d.className='pre';
+  d.innerHTML='<select aria-label="'+label+'"><option value="">Custom</option>'+list.map(l=>'<option value="'+l[1]+'">'+l[0]+'</option>').join('')+'</select>';
+  const s=d.querySelector('select');box.appendChild(d);
+  s.addEventListener('change',()=>{if(s.value){S[key]=+s.value;sl[key].set(S[key])}});
+  s.value=String(S[key]);if(s.value!==String(S[key]))s.value='';
+  sl[key].on=()=>{s.value=''};
+  return d;
+}
+const f1=$('#f1'),f2=$('#f2'),f3=$('#f3'),f4=$('#f4');
+slider($('#f0'),'speed','Simulation speed (1 s = ?)',1,100000,0,'',true,v=>{const m=v/60;return '×'+fm(v)+' ('+(m<120?fm(m)+' min':fm(m/60)+' h')+')'});
+slider(f1,'T','Starting temperature',-20,100,0.5,'°C',false,v=>v.toFixed(1));
+sl.T.on=v=>{S.T0=v;hist=[];time=0};
+slider(f1,'m','Mass of liquid',0.05,20,0,'kg',true);
+slider(f1,'c','Specific heat capacity',1000,5000,10,'J/kg·K',false,v=>v.toFixed(0));
+f1.insertBefore(preset(f1,'c','Liquid type',LIQ,'c'),f1.lastChild);
+slider(f2,'Rw','Wall thermal resistance',0.005,5,0,'K/W',true);
+const f2b=$('#f2b');
+slider(f2b,'lt','Thickness',0,50,1,'mm',false,v=>v.toFixed(0));
+slider(f2b,'lk','Thermal conductivity',0.01,400,0,'W/m·K',true);
+slider(f2b,'lx','Added resistance (contact gap, film)',0,5,0.05,'K/W',false,v=>v.toFixed(2));
+slider(f2b,'lm','Mass of PCM',0.01,20,0,'kg',true);
+slider(f2b,'lc','Specific heat (solid and liquid)',300,4200,10,'J/kg·K',false,v=>v.toFixed(0));
+slider(f2b,'Lh','Latent heat of fusion',0,400,1,'kJ/kg',false,v=>v.toFixed(0));
+slider(f2b,'Tf','Melting point',-20,60,0.5,'°C',false,v=>v.toFixed(1));
+slider(f2b,'Tm0','Starting temperature',-20,100,0.5,'°C',false,v=>v.toFixed(1));
+sl.Tm0.on=v=>{S.Tm=v;hist=[];time=0};
+const lr2=document.createElement('p');lr2.className='note';f2b.appendChild(lr2);
+slider(f3,'t','Insulation thickness',0,100,1,'mm',false,v=>v.toFixed(0));
+slider(f3,'k','Thermal conductivity',0.01,400,0,'W/m·K',true);
+f3.insertBefore(preset(f3,'k','Insulation material',MAT,'k'),f3.lastChild.previousSibling);
+slider(f3,'Rx','Added resistance (air gap, reflective film)',0,5,0.05,'K/W',false,v=>v.toFixed(2));
+const lr=document.createElement('p');lr.className='note';f3.appendChild(lr);
+slider(f4,'Ta','Air temperature',-10,50,0.5,'°C',false,v=>v.toFixed(1));
+slider(f4,'RH','Relative humidity',0,100,1,'%',false,v=>v.toFixed(0));
+f4.insertAdjacentHTML('beforeend','<p class="note">Humid air adds moisture to the insulation, which raises its conductivity. If the outer surface drops below the dew point, water condenses and releases extra heat.</p>');
+const RO=[['T','Liquid temperature','big'],['Tm','PCM temperature'],['melt','PCM state'],['Q','Heat flow into liquid'],['C','Liquid thermal mass'],['Rc','Total resistance (no air film)'],['tau','Liquid time constant'],['Ts','Outer surface'],['Td','Dew point'],['cond','Condensation'],['time','Elapsed']];
+const ro={};
+RO.forEach(r=>{const d=document.createElement('div');if(r[2])d.id=r[2];d.innerHTML='<small>'+r[1]+'</small><b></b>';$('#ro').appendChild(d);ro[r[0]]=d.querySelector('b')});
+const psat=T=>610.94*Math.exp(17.625*T/(T+243.04)),wr=(T,rh)=>{const p=Math.min(rh*psat(T),99000);return .622*p/(101325-p)};
+function solve(Tl,Tm){
+  const keff=S.k*(1+.3*S.RH/100),Rin=S.t>0?S.t/1000/(keff*A):0,Rl=(S.lt>0?S.lt/1000/(S.lk*A):0)+S.lx,
+  R1=S.Rw+Rl/2,R2=Math.max(1e-4,Rl/2+Rin+S.Rx),Ra=1/(HC*A),wa=wr(S.Ta,S.RH/100);
+  const ql=Ts=>Math.max(0,HC*A*LV*(wa-wr(Ts,1))/1006);
+  let lo=Math.min(Tm,S.Ta)-1,hi=Math.max(Tm,S.Ta)+40;
+  for(let i=0;i<40;i++){const x=(lo+hi)/2;((S.Ta-x)/Ra+ql(x)-(x-Tm)/R2>0)?lo=x:hi=x}
+  const Ts=(lo+hi)/2;
+  return{Ts,Q1:(Tm-Tl)/R1,Q2:(Ts-Tm)/R2,Ql:ql(Ts),R1,R2,Rc:R1+R2,Rl,Rin,Ra,keff};
+}
+const PW=1,LJ=()=>Math.max(S.Lh*1000,100);
+const hn=T=>{const L=LJ(),lo=S.Tf-PW/2,hi=S.Tf+PW/2;return T<lo?S.lc*(T-lo):T<hi?L*(T-lo)/PW:L+S.lc*(T-hi)};
+const mf=T=>clamp(hn(T)/LJ(),0,1);
+function advance(ds){
+  time+=ds;const C=S.m*S.c,Cx=C+S.lm*(S.lc+LJ()/10),r0=solve(S.T,S.Tm),n=Math.min(300,Math.max(1,Math.ceil(ds/((Cx*(r0.Rc+r0.Ra))/25)))),h=ds/n;
+  for(let i=0;i<n;i++){
+    const r=solve(S.T,S.Tm),G1=1/r.R1,G2=1/(r.R2+r.Ra),Te=S.Tm+r.Q2/G2,a=h*G1/C,H0=S.lm*hn(S.Tm);
+    let lo=Math.min(S.T,S.Tm,Te)-1,hi=Math.max(S.T,S.Tm,Te)+1;
+    for(let j=0;j<50;j++){const x=(lo+hi)/2,Tl2=(S.T+a*x)/(1+a);(S.lm*hn(x)-H0-h*(G1*(Tl2-x)+G2*(Te-x))<0)?lo=x:hi=x}
+    const Tm2=(lo+hi)/2;S.T=(S.T+a*Tm2)/(1+a);S.Tm=Tm2;
+  }
+  hist.push([time,S.T,S.Tm]);if(hist.length>1500)hist=hist.filter((_,i)=>i%2==0);
+}
+let CB=[47,111,224],CM=[154,167,176],CR=[229,69,42];const lc=(a,b,t)=>a.map((x,i)=>Math.round(x+(b[i]-x)*t));
+const tc=T=>'rgb('+(T<20?lc(CB,CM,clamp((T+10)/30,0,1)):lc(CM,CR,clamp((T-20)/60,0,1)))+')';
+const V=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const P=Array.from({length:150},(_,i)=>({s:i%4,u:Math.random(),p:Math.random()}));
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function fit(c){const r=c.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);c.width=r.width*d;c.height=r.height*d;c._w=r.width;c._h=r.height;c.getContext('2d').setTransform(d,0,0,d,0,0)}
+addEventListener('resize',()=>{fit(cv);fit(gv)});fit(cv);fit(gv);
+function rr(x,y,w,h,r){cx.beginPath();cx.roundRect?cx.roundRect(x,y,w,h,r):cx.rect(x,y,w,h);cx.fill()}
+function draw(r,dt){
+  const W=cv._w,H=cv._h,m=Math.min(W,H);cx.clearRect(0,0,W,H);
+  cx.globalAlpha=.16;cx.fillStyle=tc(S.Ta);cx.fillRect(0,0,W,H);cx.globalAlpha=1;
+  const hw=.17*m,hh=.2*m,wp=6+9*Math.log10(S.Rw/.005),lp=S.lt>0?Math.max(3,S.lt/50*.07*m):0,ip=S.t>0?Math.max(3,S.t/100*.1*m):0,cX=W/2,cY=H/2,lx=cX-hw,ly=cY-hh,lw=2*hw,lh=2*hh,e1=wp+lp,e2=e1+ip;
+  const R=(e,col)=>{cx.fillStyle=col;rr(lx-e,ly-e,lw+2*e,lh+2*e,Math.max(2,e*.3))};
+  if(ip)R(e2,V('--ins'));
+  if(lp){R(e1,V('--lay'));cx.globalAlpha=.4;R(e1,tc(S.Tm));cx.globalAlpha=.5*mf(S.Tm);R(e1,'#fff');cx.globalAlpha=1}
+  R(wp,V('--wall'));R(0,tc(S.T));
+  cx.textAlign='center';cx.font='800 '+Math.round(m*.05)+'px "Schibsted Grotesk",system-ui,sans-serif';cx.fillStyle='#fff';cx.shadowColor='rgba(0,0,0,.5)';cx.shadowBlur=4;
+  cx.fillText(S.T.toFixed(1)+' °C',cX,cY+m*.018);cx.shadowBlur=0;
+  cx.textAlign='left';cx.font='600 13px "Schibsted Grotesk",system-ui,sans-serif';cx.fillStyle=V('--mut');cx.fillText('Air '+S.Ta.toFixed(1)+' °C, '+S.RH.toFixed(0)+'% humidity',10,20);
+  const am=Math.min(H/2-hh-e2,W/2-hw-e2)-6,amv=Math.max(14,am*.92),D=e2+amv;
+  const Tf1=S.T+r.Q1*S.Rw,Tf2=r.Ts-r.Q2*(r.Rin+S.Rx);
+  cx.lineCap='round';
+  for(const q of P){
+    const d0=D*(1-q.p),ql=d0<wp+lp/2?r.Q1:r.Q2,vis=clamp(Math.log10(1+Math.abs(ql)*10)/2.5,0,1),dir=ql>=0?1:-1;
+    q.p=(q.p+dir*vis*(reduce?.25:.8)*dt+1)%1;
+    const d=D*(1-q.p);let T;
+    if(d>e2)T=r.Ts+(S.Ta-r.Ts)*(d-e2)/amv;else if(d>e1)T=Tf2+(r.Ts-Tf2)*(d-e1)/ip;
+    else if(d>wp){const f=(d-wp)/lp;T=f<.5?Tf1+(S.Tm-Tf1)*f*2:S.Tm+(Tf2-S.Tm)*(f-.5)*2}else T=S.T+(Tf1-S.T)*d/wp;
+    let x,y,nx=0,ny=0;
+    if(q.s==0){x=lx+q.u*lw;y=ly-d;ny=1}else if(q.s==1){x=lx+q.u*lw;y=ly+lh+d;ny=-1}else if(q.s==2){x=lx-d;y=ly+q.u*lh;nx=1}else{x=lx+lw+d;y=ly+q.u*lh;nx=-1}
+    const L=3+9*vis,tx=x-nx*dir*L,ty=y-ny*dir*L;
+    cx.globalAlpha=.3+.7*vis;
+    cx.strokeStyle=V('--bg');cx.lineWidth=5;cx.beginPath();cx.moveTo(tx,ty);cx.lineTo(x,y);cx.stroke();
+    cx.strokeStyle=tc(T);cx.lineWidth=2.6;cx.beginPath();cx.moveTo(tx,ty);cx.lineTo(x,y);cx.stroke();
+  }
+  cx.globalAlpha=1;
+  if(r.Ql>.01){cx.fillStyle=V('--drop');cx.strokeStyle=V('--cold');cx.lineWidth=1;
+    for(let i=0;i<44;i++){const s=i%4,u=((i*0.6180339)%1)*.9+.05,d=e2+3;let x,y;
+      if(s==0){x=lx-e2+u*(lw+2*e2);y=ly-d}else if(s==1){x=lx-e2+u*(lw+2*e2);y=ly+lh+d}else if(s==2){x=lx-d;y=ly-e2+u*(lh+2*e2)}else{x=lx+lw+d;y=ly-e2+u*(lh+2*e2)}
+      cx.beginPath();cx.arc(x,y,2.8,0,7);cx.fill();cx.stroke()}}
+}
+const G={xu:'auto',xt:5,yt:5,ymin:'',ymax:'',xl:'Time',yl:'Temperature (°C)',dec:'auto',grid:true,title:'',ew:1400,eh:800};
+const XU={s:[1,'s'],min:[60,'min'],h:[3600,'h'],d:[86400,'days']};
+function drawGraph(g,W,H){
+  const fs=Math.max(11,Math.round(W/60)),fam='"Schibsted Grotesk",system-ui,sans-serif',txt=V('--gt'),grid=V('--gg'),lw=Math.max(1.8,fs/7);
+  g.clearRect(0,0,W,H);g.fillStyle=V('--gb');g.fillRect(0,0,W,H);
+  const pl=fs*3.6+(G.yl?fs*1.5:0),pr=fs*1.6,pt=fs*.9+(G.title?fs*1.7:0),pb=fs*2.4+(G.xl?fs*1.5:0),pw=W-pl-pr,ph=H-pt-pb;
+  let lo=Math.min(S.Ta,S.T0,S.Tm0,S.T,S.Tm),hi=Math.max(S.Ta,S.T0,S.Tm0,S.T,S.Tm);hist.forEach(h=>{lo=Math.min(lo,h[1],h[2]);hi=Math.max(hi,h[1],h[2])});
+  const pad=Math.max(1,(hi-lo)*.1);lo-=pad;hi+=pad;
+  const mn=parseFloat(G.ymin),mx=parseFloat(G.ymax);if(isFinite(mn))lo=mn;if(isFinite(mx))hi=mx;if(hi<=lo)hi=lo+1;
+  const tm=Math.max(time,1);let u=G.xu;if(u==='auto')u=tm<120?'s':tm<7200?'min':tm<172800?'h':'d';const[uf,ul]=XU[u];
+  const y=v=>pt+ph*(1-(v-lo)/(hi-lo)),x=t=>pl+pw*t/tm,dp=st=>G.dec==='auto'?(st>=5?0:st>=.5?1:st>=.05?2:3):+G.dec;
+  const yn=clamp(G.yt|0,2,12),xn=clamp(G.xt|0,2,12);
+  g.font='400 '+fs+'px '+fam;g.lineWidth=1;g.textAlign='right';g.textBaseline='middle';
+  for(let i=0;i<yn;i++){const v=lo+(hi-lo)*i/(yn-1),py=y(v);
+    if(G.grid){g.strokeStyle=grid;g.beginPath();g.moveTo(pl,py);g.lineTo(pl+pw,py);g.stroke()}
+    g.strokeStyle=txt;g.beginPath();g.moveTo(pl-fs*.35,py);g.lineTo(pl,py);g.stroke();
+    g.fillStyle=txt;g.fillText(v.toFixed(dp((hi-lo)/(yn-1))),pl-fs*.5,py)}
+  g.textAlign='center';g.textBaseline='top';
+  for(let i=0;i<xn;i++){const t=tm*i/(xn-1),px=x(t);
+    if(G.grid){g.strokeStyle=grid;g.beginPath();g.moveTo(px,pt);g.lineTo(px,pt+ph);g.stroke()}
+    g.strokeStyle=txt;g.beginPath();g.moveTo(px,pt+ph);g.lineTo(px,pt+ph+fs*.35);g.stroke();
+    g.fillStyle=txt;g.fillText((t/uf).toFixed(dp(tm/uf/(xn-1))),px,pt+ph+fs*.5)}
+  g.strokeStyle=txt;g.lineWidth=1.5;g.beginPath();g.moveTo(pl,pt);g.lineTo(pl,pt+ph);g.lineTo(pl+pw,pt+ph);g.stroke();
+  g.fillStyle=txt;
+  if(G.xl){g.textBaseline='bottom';g.fillText(G.xl+' ('+ul+')',pl+pw/2,H-fs*.3)}
+  if(G.yl){g.save();g.translate(fs*.4,pt+ph/2);g.rotate(-Math.PI/2);g.textBaseline='top';g.fillText(G.yl,0,0);g.restore()}
+  if(G.title){g.font='800 '+Math.round(fs*1.25)+'px '+fam;g.fillStyle=V('--gl');g.textBaseline='top';g.fillText(G.title,pl+pw/2,fs*.4);g.font='400 '+fs+'px '+fam}
+  g.save();g.beginPath();g.rect(pl,pt,pw,ph);g.clip();
+  g.setLineDash([lw*2.5,lw*2]);g.strokeStyle=V('--ga');g.lineWidth=lw*.8;g.beginPath();g.moveTo(pl,y(S.Ta));g.lineTo(pl+pw,y(S.Ta));g.stroke();
+  if(S.Tf>lo&&S.Tf<hi){g.setLineDash([lw,lw*1.5]);g.strokeStyle=V('--gm');g.lineWidth=lw*.7;g.beginPath();g.moveTo(pl,y(S.Tf));g.lineTo(pl+pw,y(S.Tf));g.stroke()}
+  g.setLineDash([]);
+  [[1,V('--gl')],[2,V('--gp')]].forEach(([k,c])=>{if(hist.length>1){g.strokeStyle=c;g.lineWidth=lw;g.lineJoin='round';g.beginPath();hist.forEach((h,i)=>i?g.lineTo(x(h[0]),y(h[k])):g.moveTo(x(h[0]),y(h[k])));g.stroke()}});
+  g.fillStyle=tc(S.T);g.strokeStyle=V('--gl');g.lineWidth=2;g.beginPath();g.arc(x(time),y(S.T),lw*1.7,0,7);g.fill();g.stroke();
+  g.fillStyle=tc(S.Tm);g.strokeStyle=V('--gp');g.beginPath();g.arc(x(time),y(S.Tm),lw*1.5,0,7);g.fill();g.stroke();
+  g.restore();
+  g.textAlign='left';g.textBaseline='top';g.font='600 '+fs+'px '+fam;
+  let lx=pl+fs*.6,ly=pt+fs*.4;
+  [['— Liquid','--gl'],['— PCM layer','--gp'],['- - Air','--ga'],['··· Melting point','--gm']].forEach(([t,c])=>{const w=g.measureText(t).width;if(lx+w>pl+pw){lx=pl+fs*.6;ly+=fs*1.3}g.fillStyle=V(c);g.fillText(t,lx,ly);lx+=w+fs*1.1});
+  g.textBaseline='alphabetic';
+}
+function graph(){drawGraph(gx,gv._w,gv._h)}
+const ft=s=>s<120?s.toFixed(0)+' s':s<7200?(s/60).toFixed(0)+' min':s<172800?(s/3600).toFixed(1)+' h':(s/86400).toFixed(1)+' d';
+function dew(){const g=Math.log(Math.max(.01,S.RH/100))+17.625*S.Ta/(243.04+S.Ta);return 243.04*g/(17.625-g)}
+function readout(r){
+  const C=S.m*S.c,Td=dew(),a=Math.abs(r.Q1);
+  ro.T.textContent=S.T.toFixed(2)+' °C';
+  ro.Tm.textContent=S.Tm.toFixed(2)+' °C';
+  {const f=mf(S.Tm);ro.melt.textContent=S.Lh<1?'No latent heat':f<.005?'Solid':f>.995?'Liquid':(f*100).toFixed(0)+'% melted'}
+  ro.Q.textContent=a<.005?'None':a.toFixed(2)+' W '+(r.Q1>0?'in':'out');
+  ro.C.textContent=(C/1000).toFixed(1)+' kJ/K';
+  ro.Rc.textContent=r.Rc.toFixed(2)+' K/W';
+  ro.tau.textContent=ft(C*(r.Rc+r.Ra));
+  ro.Ts.textContent=r.Ts.toFixed(1)+' °C';
+  ro.Td.textContent=Td.toFixed(1)+' °C';
+  ro.cond.textContent=r.Ql>.01?r.Ql.toFixed(1)+' W latent':'Dry';
+  ro.cond.id=r.Ql>.01?'cond':'';
+  ro.time.textContent=ft(time);
+  lr.textContent=S.t>0?'Insulation layer resistance: '+r.Rin.toFixed(2)+' K/W (thickness ÷ conductivity ÷ area). Effective conductivity with humidity: '+fm(r.keff)+' W/m·K.':'No insulation layer: only the wall and the air film resist heat flow.';
+  lr2.textContent='PCM layer resistance: '+r.Rl.toFixed(3)+' K/W (thickness ÷ conductivity ÷ area, plus added resistance). Heat stored: '+(S.lm*S.lc).toFixed(0)+' J/K sensible, plus '+(S.lm*S.Lh).toFixed(1)+' kJ latent. Melting happens over a 1 °C band.';
+}
+function frame(now){
+  const dt=clamp((now-last)/1000,0,.1);last=now;readScale();
+  if(S.run)advance(dt*S.speed);
+  const r=solve(S.T,S.Tm);draw(r,dt);readout(r);graph();requestAnimationFrame(frame);
+}
+const norm=h=>{const m=/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(h||'').trim());if(!m)return null;let x=m[1].toLowerCase();if(x.length==3)x=x.replace(/./g,c=>c+c);return '#'+x};
+const hexArr=h=>{h=norm(h);return h?[1,3,5].map(i=>parseInt(h.substr(i,2),16)):null};
+const readScale=()=>{CB=hexArr(V('--cold'))||CB;CM=hexArr(V('--mid'))||CM;CR=hexArr(V('--hot'))||CR};
+const CUS={},cin={},root=document.documentElement,f6=$('#f6');
+const COLS=[['Page',[['bg','Background'],['pn','Panel'],['ink','Text'],['ac','Accent']]],['Vessel',[['wall','Vessel wall'],['lay','PCM layer'],['ins','Insulation']]],['Temperature scale, heat flow and condensation',[['cold','Cold'],['mid','Neutral'],['hot','Hot'],['drop','Condensation droplets']]],['Graph',[['gb','Graph background'],['gt','Axes and text'],['gg','Grid lines'],['gl','Liquid line'],['gp','PCM line'],['ga','Air line'],['gm','Melting point line']]]];
+COLS.forEach(([grp,items])=>{
+  const h=document.createElement('p');h.className='sub';h.textContent=grp;f6.appendChild(h);
+  items.forEach(([id,lab])=>{
+    const d=document.createElement('div');d.className='fr';
+    d.innerHTML='<label>'+lab+'</label><span class="in"><input type="color" aria-label="'+lab+' colour picker"><input type="text" maxlength="7" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="'+lab+' hex code" placeholder="#rrggbb"></span>';
+    const[pk,tx]=d.querySelectorAll('input');
+    const apply=v=>{CUS[id]=v;root.style.setProperty('--'+id,v)};
+    pk.addEventListener('input',()=>{tx.value=pk.value;tx.setAttribute('aria-invalid','false');apply(pk.value)});
+    tx.addEventListener('input',()=>{const v=norm(tx.value);if(v){pk.value=v;tx.setAttribute('aria-invalid','false');apply(v)}else tx.setAttribute('aria-invalid',String(tx.value.trim()!==''))});
+    cin[id]=[pk,tx];f6.appendChild(d);
+  });
+});
+const syncCols=()=>{for(const id in cin){if(CUS[id])continue;const v=norm(V('--'+id));if(v){cin[id][0].value=v;cin[id][1].value=v}}};
+const rb=document.createElement('button');rb.type='button';rb.textContent='Reset all colours';rb.style.marginTop='10px';
+rb.onclick=()=>{for(const id in CUS){root.style.removeProperty('--'+id);delete CUS[id]}for(const id in cin)cin[id][1].setAttribute('aria-invalid','false');syncCols()};
+f6.appendChild(rb);syncCols();
+try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>setTimeout(syncCols,50))}catch(e){}
+if(typeof MutationObserver!=='undefined')new MutationObserver(()=>setTimeout(syncCols,50)).observe(root,{attributes:true,attributeFilter:['data-theme']});
+const f5=$('#f5');
+function fld(lab,key,type,o){
+  o=o||{};const id='g_'+key,d=document.createElement('div');d.className='fr';
+  d.innerHTML='<label for="'+id+'">'+lab+'</label>'+(type==='select'?'<select id="'+id+'">'+o.opts.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('')+'</select>':'<input id="'+id+'" type="'+type+'"'+(o.attr||'')+(type==='text'?' class="w"':'')+'>');
+  const e=d.querySelector('input,select');
+  if(type==='checkbox')e.checked=G[key];else e.value=G[key];
+  e.addEventListener(type==='checkbox'||type==='select'?'change':'input',()=>{
+    if(type==='checkbox')G[key]=e.checked;
+    else if(type==='number'){if(e.value===''){if(o.blank)G[key]=''}else if(isFinite(+e.value))G[key]=o.min!=null?clamp(+e.value,o.min,o.max):+e.value}
+    else G[key]=e.value});
+  f5.appendChild(d);
+}
+fld('Graph title','title','text');
+fld('X-axis title','xl','text');
+fld('Y-axis title','yl','text');
+fld('X-axis units','xu','select',{opts:[['auto','Automatic'],['s','Seconds'],['min','Minutes'],['h','Hours'],['d','Days']]});
+fld('X-axis markers (count)','xt','number',{attr:' min="2" max="12" step="1" inputmode="numeric"',min:2,max:12});
+fld('Y-axis markers (count)','yt','number',{attr:' min="2" max="12" step="1" inputmode="numeric"',min:2,max:12});
+fld('Y minimum (blank = automatic)','ymin','number',{attr:' step="any" inputmode="decimal"',blank:1});
+fld('Y maximum (blank = automatic)','ymax','number',{attr:' step="any" inputmode="decimal"',blank:1});
+fld('Marker decimals','dec','select',{opts:[['auto','Automatic'],['0','0'],['1','1'],['2','2'],['3','3']]});
+fld('Show grid lines','grid','checkbox');
+fld('Image width (px)','ew','number',{attr:' min="400" max="4000" step="50" inputmode="numeric"',min:400,max:4000});
+fld('Image height (px)','eh','number',{attr:' min="300" max="3000" step="50" inputmode="numeric"',min:300,max:3000});
+f5.insertAdjacentHTML('beforeend','<div class="bar" style="margin-top:10px"><button id="xpng" type="button">Save graph image (PNG)</button><button id="xcsv" type="button">Save data (CSV)</button></div><p class="note" id="exs" aria-live="polite">The graph above updates as you change these settings, and the saved image matches it.</p>');
+async function saveFile(name,data){
+  const st=$('#exs');
+  try{const dl=(window.claude&&claude.use)?await claude.use('downloads'):null;
+    if(dl){await dl.save({filename:name,data});st.textContent='Saved '+name+'.';return}
+  }catch(e){const c=e&&e.code;
+    if(c==='declined'){st.textContent='Save cancelled.';return}
+    if(!['unavailable','not_granted','capability_disabled','capability_removed'].includes(c)){st.textContent='Could not save: '+((e&&e.message)||'unknown error');return}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(data instanceof Blob?data:new Blob([data],{type:'text/csv'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);st.textContent='Downloaded '+name+'.';
+}
+const buildCsv=()=>'time_s,liquid_C,pcm_C\n'+hist.map(h=>h[0].toFixed(1)+','+h[1].toFixed(3)+','+h[2].toFixed(3)).join('\n');
+$('#xpng').onclick=()=>{const c=document.createElement('canvas');c.width=Math.round(G.ew);c.height=Math.round(G.eh);drawGraph(c.getContext('2d'),c.width,c.height);c.toBlob(b=>b?saveFile('heat-leak-graph.png',b):($('#exs').textContent='Could not create the image.'),'image/png')};
+$('#xcsv').onclick=()=>saveFile('heat-leak-data.csv',buildCsv());
+$('#play').onclick=e=>{S.run=!S.run;e.target.textContent=S.run?'Pause':'Play'};
+$('#reset').onclick=()=>{S.T=S.T0;S.Tm=S.Tm0;time=0;hist=[]};
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
